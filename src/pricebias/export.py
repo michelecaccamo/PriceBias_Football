@@ -198,7 +198,20 @@ def summarise(sales: pd.DataFrame, is_demo: bool) -> tuple[dict, list[dict], dic
         .rename("n")
         .reset_index()
     )
-    diagnostics = {"seller_name_mapping": json.loads(mapping.to_json(orient="records"))}
+    # Unmatched sellers whose name looks like a tracked club: catches naming variants
+    hint = r"madrid|castilla|barc|atl|bayern|juve|manch|man |chelsea|paris|psg|liverp|arsenal|milan|inter|dortm"
+    other = sales[sales["seller_group"] == OTHER]
+    suspects = (
+        other[other["from_club_name"].str.lower().str.contains(hint, na=False)]
+        .groupby("from_club_name")
+        .size()
+        .sort_values(ascending=False)
+        .head(60)
+    )
+    diagnostics = {
+        "seller_name_mapping": json.loads(mapping.to_json(orient="records")),
+        "unmatched_lookalikes": {k: int(v) for k, v in suspects.items()},
+    }
     return summary, records, diagnostics
 
 
@@ -236,6 +249,12 @@ def main(argv=None) -> None:
     for g in summary["groups"]:
         print(f"  {g['group']:<12} n={g['n']:<6} academy={g['n_academy']}")
     print(f"Verdict: {v['status']}  RM vs Barça premium: {v.get('pct')}")
+    print("Premiums:", json.dumps(summary["premiums"], indent=1))
+    print("Robustness:", json.dumps(summary["robustness"], indent=1))
+    print("Groups:", json.dumps(summary["groups"], indent=1))
+    print("Unmatched look-alike seller names:")
+    for name, n in diagnostics["unmatched_lookalikes"].items():
+        print(f"  {name}  ({n})")
     print("Seller name mapping:")
     for row in diagnostics["seller_name_mapping"]:
         print(f"  {row['seller_club']:<20} academy={row['is_academy']!s:<5} "
