@@ -31,10 +31,13 @@ whether they agree:
 | **Transfermarkt (manual top-up)** | Add-ons, buy-back clauses, sell-on percentages for the RM and Barça samples | Manual annotation. The samples are small enough to do this. |
 | **Inflation index** | Adjusts fees for football's price inflation (e.g., yearly median top-5-league fee, or the CIES/KPMG index) | Built from the transfers data itself |
 
-**Scope:** outgoing transfers with a fee, from 2005 to today. Real Madrid, FC Barcelona, and a
-**control group** of elite sellers (Bayern, Juventus, Man Utd, Chelsea, PSG, Atlético, Man City,
-Liverpool, Arsenal, Milan, Inter, Dortmund). Include the B teams (Castilla / Barça Atlètic),
-but tag them.
+**Scope:** outgoing transfers with a fee, from the **2009/10 season** to today. Real Madrid,
+FC Barcelona, and a **control group** of elite sellers (Bayern, Juventus, Man Utd, Chelsea, PSG,
+Atlético, Man City, Liverpool, Arsenal, Milan, Inter, Dortmund). **Academy and B-team sales
+(Castilla / Barça Atlètic, plus the youth teams) are included** and carry an `is_academy` flag,
+so every result can also be shown for first-team sales only. For seasons before about 2017,
+when FBref's advanced stats (xG, xA) are thin, the model falls back to basic stats (minutes,
+goals, assists, starts).
 
 ## 3. Data cleaning and feature engineering
 
@@ -90,10 +93,19 @@ but tag them.
 
 ## 5. Web app / dashboard
 
-**Stack:** Python + **Streamlit** (quickest route to an interactive dashboard), Plotly for
-charts, DuckDB/Parquet for storage, statsmodels + scikit-learn/LightGBM + SHAP for models.
-Deploy for free on Streamlit Community Cloud. (Alternative: FastAPI + React if you later want a
-more polished site.)
+**Architecture: a static site with the analysis done ahead of time.**
+The Python pipeline runs all the analysis and exports the results as JSON files. A React
+front end reads those files in the browser. There is no server to run, so the site can be hosted
+for free and never "sleeps".
+
+- **Analysis:** Python, pandas, DuckDB/Parquet, statsmodels, scikit-learn/LightGBM, SHAP
+- **Front end:** Vite + React + TypeScript, Tailwind CSS, Plotly.js / Recharts for charts,
+  React Router for pages
+- **Hosting:** GitHub Pages, deployed automatically by a GitHub Actions workflow on every push to
+  `main`. It's free because the repository is public. URL:
+  **https://michelecaccamo.github.io/PriceBias_Football/**
+- **Data refresh:** a scheduled GitHub Action (e.g., monthly) re-downloads the data, reruns the
+  pipeline, and redeploys
 
 **Pages:**
 1. **Verdict / overview:** headline answer ("Real Madrid sales carry a +X% premium vs. Barça,
@@ -124,9 +136,12 @@ PriceBias_Football/
 │   ├── features.py     # feature engineering
 │   ├── models/         # hedonic regression, GBM, matching
 │   └── analysis.py     # tests, bootstrap, permutation
-├── app/
-│   ├── Home.py         # Streamlit entry point (verdict)
-│   └── pages/          # the dashboard pages above
+├── pipeline/
+│   └── export.py       # writes results as JSON into web/public/data/
+├── web/                # Vite + React + TypeScript front end
+│   ├── public/data/    # generated JSON (the analysis results)
+│   └── src/pages/      # the dashboard pages above
+├── .github/workflows/  # deploy-to-Pages + scheduled data refresh
 ├── notebooks/          # exploration
 ├── tests/              # unit tests for cleaning/features/stats
 ├── pyproject.toml
@@ -141,12 +156,11 @@ PriceBias_Football/
 | 2 | Exploratory analysis | Notebook with raw RM vs. Barça fee/market-value comparisons (first rough answer) |
 | 3 | Features + performance data | Clean feature table joined with FBref stats, inflation-adjusted |
 | 4 | Models + tests | Hedonic regression, GBM residuals, matching, robustness suite |
-| 5 | Dashboard v1 | Streamlit app with the Verdict, Distributions, and Scatter pages |
+| 5 | Dashboard v1 | React site with the Verdict, Distributions, and Scatter pages, live on GitHub Pages |
 | 6 | Dashboard v2 | Player-vs-player matching, SHAP explorer, Hindsight page |
-| 7 | Deploy + write-up | Public Streamlit app and a README summarising the findings and limitations |
+| 7 | Polish + write-up | Scheduled data refresh, mobile layout, and a README summarising the findings and limitations |
 
-## 8. Open decisions
-- Time window: 2005+ or 2010+ (FBref advanced stats are richer from about 2017).
-- Include only first-team sales, or academy/B-team sales too (Real Madrid sells many Castilla
-  players with buy-back clauses)?
-- Streamlit (fast) or a custom web front-end (more polished)?
+## 8. Decisions made
+- Time window: **2009/10 season onward**.
+- **Academy/B-team sales included**, with a flag so they can be filtered out.
+- Front end: **polished custom React site** on GitHub Pages (free), not Streamlit.
