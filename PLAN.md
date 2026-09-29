@@ -164,3 +164,13 @@ PriceBias_Football/
 - Time window: **2009/10 season onward**.
 - **Academy/B-team sales included**, with a flag so they can be filtered out.
 - Front end: **polished custom React site** on GitHub Pages (free), not Streamlit.
+
+## 9. Progress
+- [x] Milestone 1: repository skeleton, ingestion, CI pipeline on real data
+- [x] Milestone 2–4 (first version): sale classification, expected-fee model, hedonic premium
+  regressions, bootstrap, permutation test, robustness subsets
+- [x] Milestone 5: React site (Verdict, Clubs, Fee vs. expected, Transfers with comparable sales,
+  Methodology), deployed to GitHub Pages by CI
+- [ ] Contract length at sale, FBref xG/xA, buy-back and sell-on clauses (manual annotation)
+- [ ] Gradient-boosting expected fee + SHAP explanations
+- [ ] Hindsight page (post-transfer performance per euro)
