@@ -8,6 +8,8 @@ import pandas as pd
 
 from pricebias.config import DATA_BASE_URL, DATA_FILES
 
+# The data host rejects urllib's default user agent
+USER_AGENT = "pricebias/0.1 (+https://github.com/michelecaccamo/PriceBias_Football)"
 APPEARANCE_COLUMNS = ["player_id", "date", "goals", "assists", "minutes_played"]
 
 
@@ -21,7 +23,8 @@ def download(raw_dir: Path, force: bool = False) -> None:
         url = f"{DATA_BASE_URL}/{name}.csv.gz"
         print(f"Downloading {url}")
         tmp = target.with_suffix(".part")
-        with urllib.request.urlopen(url, timeout=300) as resp, open(tmp, "wb") as fh:
+        req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+        with urllib.request.urlopen(req, timeout=300) as resp, open(tmp, "wb") as fh:
             shutil.copyfileobj(resp, fh)
         tmp.rename(target)
 
