@@ -24,16 +24,17 @@ OTHER = "Other"
 GROUPS = [REAL_MADRID, BARCELONA, ELITE, OTHER]
 
 # Transfermarkt club ids of the first teams, and name stems used to recognise
-# their academy / reserve sides (e.g. "Real Madrid Castilla", "Barcelona U19").
+# their academy / reserve sides (e.g. "RM Castilla", "Barça U19"). Stems are in
+# normalised form: lower case, no accents, punctuation replaced by spaces.
 CLUBS = {
-    "Real Madrid": {"group": REAL_MADRID, "ids": [418], "stems": ["real madrid"]},
+    "Real Madrid": {"group": REAL_MADRID, "ids": [418], "stems": ["real madrid", "r madrid", "rm"]},
     "Barcelona": {
         "group": BARCELONA,
         "ids": [131],
         "stems": ["fc barcelona", "barcelona", "barca"],
     },
     "Bayern Munich": {"group": ELITE, "ids": [27], "stems": ["bayern munich", "fc bayern", "bayern"]},
-    "Juventus": {"group": ELITE, "ids": [506], "stems": ["juventus"]},
+    "Juventus": {"group": ELITE, "ids": [506], "stems": ["juventus", "juve"]},
     "Manchester United": {"group": ELITE, "ids": [985], "stems": ["manchester united", "man utd"]},
     "Chelsea": {"group": ELITE, "ids": [631], "stems": ["chelsea"]},
     "Paris Saint-Germain": {
@@ -44,25 +45,31 @@ CLUBS = {
     "Atletico Madrid": {
         "group": ELITE,
         "ids": [13],
-        "stems": ["atletico madrid", "atletico de madrid", "atleti"],
+        "stems": ["atletico madrid", "atletico de madrid", "atl madrid", "atletico", "atleti"],
     },
     "Manchester City": {"group": ELITE, "ids": [281], "stems": ["manchester city", "man city"]},
-    "Liverpool": {"group": ELITE, "ids": [31], "stems": ["liverpool", "liverpool fc"]},
+    "Liverpool": {"group": ELITE, "ids": [31], "stems": ["liverpool"]},
     "Arsenal": {"group": ELITE, "ids": [11], "stems": ["arsenal", "arsenal fc"]},
     "AC Milan": {"group": ELITE, "ids": [5], "stems": ["ac milan", "milan"]},
     "Inter": {"group": ELITE, "ids": [46], "stems": ["inter milan", "inter"]},
     "Borussia Dortmund": {
         "group": ELITE,
         "ids": [16],
-        "stems": ["borussia dortmund", "dortmund", "bvb"],
+        "stems": ["borussia dortmund", "b dortmund", "bor dortmund", "dortmund", "bvb"],
     },
 }
 
 # Suffixes that identify an academy / reserve / youth side of a club
 YOUTH_SUFFIX = (
-    r"(ii|b|c|u\d{2}|youth|reserves?|academy|castilla|atletic|next ?gen|primavera"
+    r"(ii|b|c|u\d{2}|youth|yth|reserves?|res|academy|castilla|atletic|next ?gen|primavera"
     r"|juvenil( [ab])?|b team|under ?\d{2})"
 )
+
+# Reserve sides whose names don't follow the "<club> <suffix>" pattern
+ACADEMY_ALIASES = {
+    "atl madrileno": "Atletico Madrid",
+    "atletico madrileno": "Atletico Madrid",
+}
 
 LEAGUES = {
     "GB1": "Premier League",

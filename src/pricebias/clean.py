@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 
 from pricebias.config import (
+    ACADEMY_ALIASES,
     CLUBS,
     LEAGUES,
     MIN_FEE_EUR,
@@ -45,6 +46,8 @@ def classify_club(club_id, club_name) -> tuple[str | None, bool]:
     if pd.notna(club_id) and int(club_id) in by_id:
         return by_id[int(club_id)], False
     norm = normalise(club_name)
+    if norm in ACADEMY_ALIASES:
+        return ACADEMY_ALIASES[norm], True
     for pattern, club in youth:
         if pattern.match(norm):
             return club, True

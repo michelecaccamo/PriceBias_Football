@@ -30,6 +30,17 @@ def sales(tmp_path_factory):
         (None, "Inter Turku II", (None, False)),
         (None, "Real Madrid", (None, False)),  # first team is matched by id only
         (28, "Bayern Munich II", ("Bayern Munich", True)),
+        (None, "RM Castilla", ("Real Madrid", True)),
+        (None, "B. Dortmund II", ("Borussia Dortmund", True)),
+        (None, "Juve Next Gen", ("Juventus", True)),
+        (None, "Chelsea Res.", ("Chelsea", True)),
+        (None, "Atl. Madrid B", ("Atletico Madrid", True)),
+        (None, "Atlético Yth.", ("Atletico Madrid", True)),
+        (None, "Atl. Madrileño", ("Atletico Madrid", True)),
+        (None, "Atlético-MG", (None, False)),
+        (None, "Juve Stabia", (None, False)),
+        (None, "Liverpool FC", (None, False)),
+        (None, "Internacional", (None, False)),
     ],
 )
 def test_classify_club(club_id, name, expected):
