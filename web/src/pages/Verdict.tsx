@@ -11,8 +11,8 @@ const HEADLINES = {
     body: 'After controlling for age, position, form, market value, buyer and season, Real Madrid sells players for significantly more than Barcelona does for comparable players.',
   },
   not_supported: {
-    title: 'Not proven: no clear Madrid premium',
-    body: 'Once comparable players are compared like for like, the gap between Real Madrid and Barcelona sale prices is not large enough to rule out chance.',
+    title: 'Not proven: the gap could be chance',
+    body: 'Once comparable players are compared like for like, the gap between Real Madrid and Barcelona sale prices is too uncertain to rule out chance.',
   },
   reversed: {
     title: 'No, if anything the reverse is true',
@@ -45,7 +45,11 @@ export default function Verdict() {
         <div>
           <p className="text-xs font-semibold tracking-[0.14em] text-muted uppercase">Verdict</p>
           <h2 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">{h.title}</h2>
-          <p className="mt-3 leading-relaxed text-ink-2">{h.body}</p>
+          <p className="mt-3 leading-relaxed text-ink-2">
+            {v.status === 'not_supported' && v.pct != null && v.ci_low != null && v.ci_high != null
+              ? `The best estimate is that Real Madrid sells ${signedPct(v.pct)} ${v.pct >= 0 ? 'above' : 'relative to'} comparable Barça sales, but the 95% range runs from ${signedPct(v.ci_low)} to ${signedPct(v.ci_high)}. It includes zero, so by the rule fixed in advance the claim is not proven. It is suggestive rather than conclusive.`
+              : h.body}
+          </p>
           <p className="mt-4 text-sm text-muted">
             Decision rule, fixed before looking at the results: the claim counts as supported only if the 95% confidence
             interval of the Real Madrid vs. Barcelona premium lies entirely above zero.
