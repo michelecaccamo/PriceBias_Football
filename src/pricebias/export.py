@@ -27,6 +27,7 @@ from pricebias.config import (
     START_DATE,
 )
 from pricebias.models import expected_fee, fit_premiums, price_index
+from pricebias.profiles import WINDOWS, build_profiles
 
 PRIMARY_SPEC = "market_value"
 TRACKED = [REAL_MADRID, BARCELONA, ELITE]
@@ -183,8 +184,13 @@ def summarise(sales: pd.DataFrame, is_demo: bool) -> tuple[dict, list[dict], dic
         "assists": "assists",
         "has_perf": "has_perf",
     }
+    for extra in ["player_id", "foot", "height_in_cm", "international_caps", "country_of_citizenship"]:
+        if extra in sales.columns:
+            cols[extra] = extra
     tracked = sales[sales["seller_group"].isin(TRACKED)][list(cols)].rename(columns=cols)
     tracked["date"] = tracked["date"].dt.strftime("%Y-%m-%d")
+    # Stable across data rebuilds, unlike the row id: used in shareable comparison links
+    tracked["key"] = tracked["player_id"].astype(str) + "-" + tracked["date"]
     for c in ["age", "fee_to_mv", "residual"]:
         tracked[c] = tracked[c].round(3)
     for c in ["fee_adj", "expected_fee"]:
@@ -215,6 +221,37 @@ def summarise(sales: pd.DataFrame, is_demo: bool) -> tuple[dict, list[dict], dic
     return summary, records, diagnostics
 
 
+def _num(x) -> float | None:
+    return None if pd.isna(x) else float(x)
+
+
+def add_profiles(records: list[dict], sales: pd.DataFrame, tables: dict) -> list[dict]:
+    """Attach pre-sale stats (career / last 12 months) and valuation history to each record."""
+    tracked = sales[sales["seller_group"].isin(TRACKED)]
+    prof = build_profiles(tracked, tables)
+    out = []
+    for rec in records:
+        p = prof.loc[rec["id"]]
+        stats = {
+            w: {k[len(w) + 1:]: int(v) for k, v in p.items() if k.startswith(f"{w}_")}
+            for w in WINDOWS
+        }
+
+        nxt = None
+        if isinstance(p["next_to"], str):
+            nxt = {"date": p["next_date"], "to": p["next_to"], "fee": _num(p["next_fee"])}
+        out.append(
+            {
+                **rec,
+                "stats": stats,
+                "mv_peak": _num(p["mv_peak"]),
+                "mv_year_before": _num(p["mv_year_before"]),
+                "next_move": nxt,
+            }
+        )
+    return out
+
+
 def write(out_dir: Path, summary: dict, records: list[dict], diagnostics: dict) -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=1))
@@ -240,8 +277,10 @@ def main(argv=None) -> None:
         if args.download:
             ingest.download(raw)
 
-    sales = build_sales(ingest.load(raw))
+    tables = ingest.load(raw)
+    sales = build_sales(tables)
     summary, records, diagnostics = summarise(sales, is_demo=args.demo)
+    records = add_profiles(records, sales, tables)
     write(args.out, summary, records, diagnostics)
 
     v = summary["verdict"]
@@ -252,6 +291,12 @@ def main(argv=None) -> None:
     print("Premiums:", json.dumps(summary["premiums"], indent=1))
     print("Robustness:", json.dumps(summary["robustness"], indent=1))
     print("Groups:", json.dumps(summary["groups"], indent=1))
+    print("Example players in the comparison data:")
+    for q in ["abel ruiz", "gonzalo"]:
+        for r in records:
+            if q in str(r["player"]).lower() and r["group"] in (REAL_MADRID, BARCELONA):
+                print(f"  {r['player']} · {r['from']} → {r['to']} · {r['date']} · "
+                      f"career minutes {r['stats']['career']['minutes']}")
     print("Unmatched look-alike seller names:")
     for name, n in diagnostics["unmatched_lookalikes"].items():
         print(f"  {name}  ({n})")

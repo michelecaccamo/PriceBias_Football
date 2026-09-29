@@ -1,4 +1,6 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { mostSimilar, rivalGroups } from '../compare'
 import { eur, premiumOf, seasonLabel, signedPct, TRACKED, useData, type Group, type Sale } from '../data'
 import { Card, PageHeader, Swatch } from '../components/ui'
 
@@ -156,33 +158,11 @@ export default function Transfers() {
   )
 }
 
-/** Distance between two sales on the features that drive price. Same position required. */
-function distance(a: Sale, b: Sale): number {
-  if (a.position !== b.position || a.mv == null || b.mv == null || a.age == null || b.age == null) return Infinity
-  return (
-    ((a.age - b.age) / 2) ** 2 +
-    (Math.log(a.mv / b.mv) / 0.5) ** 2 +
-    ((a.season - b.season) / 4) ** 2 +
-    (a.academy !== b.academy ? 1 : 0)
-  )
-}
-
-function rivalsOf(g: Group): Group[] {
-  if (g === 'Real Madrid') return ['Barcelona']
-  if (g === 'Barcelona') return ['Real Madrid']
-  return ['Real Madrid', 'Barcelona']
-}
-
 function Detail({ sale, onPick }: { sale: Sale; onPick: (s: Sale) => void }) {
   const { sales } = useData()
   const comps = useMemo(() => {
-    const rivals = rivalsOf(sale.group)
-    return sales
-      .filter((s) => rivals.includes(s.group) && s.id !== sale.id)
-      .map((s) => ({ s, d: distance(sale, s) }))
-      .filter((x) => Number.isFinite(x.d))
-      .sort((a, b) => a.d - b.d)
-      .slice(0, 5)
+    const rivals = rivalGroups(sale.group)
+    return mostSimilar(sale, sales.filter((s) => rivals.includes(s.group)), sales, 5)
   }, [sale, sales])
 
   const facts: [string, string][] = [
@@ -213,6 +193,12 @@ function Detail({ sale, onPick }: { sale: Sale; onPick: (s: Sale) => void }) {
           </p>
         </div>
       </div>
+      <Link
+        to={`/compare?a=${encodeURIComponent(sale.key)}`}
+        className="mt-3 inline-block rounded-full border border-line px-3 py-1 text-sm text-ink-2 hover:bg-surface-2"
+      >
+        Open in Compare →
+      </Link>
       <p className="mt-4 text-4xl font-semibold tracking-tight text-ink">{signedPct(premiumOf(sale))}</p>
       <p className="text-sm text-muted">premium over expected fee</p>
       <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
@@ -225,13 +211,13 @@ function Detail({ sale, onPick }: { sale: Sale; onPick: (s: Sale) => void }) {
       </dl>
 
       <h3 className="mt-6 mb-2 text-sm font-semibold text-ink">
-        Most similar {rivalsOf(sale.group).join(' / ')} sales
+        Most similar {rivalGroups(sale.group).join(' / ')} sales
       </h3>
       {comps.length ? (
         <ol className="divide-y divide-line">
-          {comps.map(({ s }) => (
-            <li key={s.id}>
-              <button onClick={() => onPick(s)} className="flex w-full items-center gap-3 py-2 text-left text-sm hover:bg-surface-2">
+          {comps.map(({ sale: s }) => (
+            <li key={s.id} className="flex items-center gap-1">
+              <button onClick={() => onPick(s)} className="flex min-w-0 flex-1 items-center gap-3 py-2 text-left text-sm hover:bg-surface-2">
                 <Swatch group={s.group} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate font-medium text-ink">{s.player}</span>
@@ -241,6 +227,13 @@ function Detail({ sale, onPick }: { sale: Sale; onPick: (s: Sale) => void }) {
                 </span>
                 <span className="font-medium text-ink tabular">{signedPct(premiumOf(s))}</span>
               </button>
+              <Link
+                to={`/compare?a=${encodeURIComponent(sale.key)}&b=${encodeURIComponent(s.key)}`}
+                className="rounded-full px-2 py-1 text-xs text-accent hover:bg-surface-2"
+                aria-label={`Compare ${sale.player} with ${s.player}`}
+              >
+                vs →
+              </Link>
             </li>
           ))}
         </ol>

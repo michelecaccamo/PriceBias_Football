@@ -4,7 +4,15 @@ from datetime import date
 
 # Public snapshot of github.com/dcaribou/transfermarkt-datasets
 DATA_BASE_URL = "https://pub-e682421888d945d684bcae8890b0ec20.r2.dev/data"
-DATA_FILES = ["transfers", "players", "clubs", "appearances"]
+DATA_FILES = [
+    "transfers",
+    "players",
+    "clubs",
+    "appearances",
+    "games",
+    "game_lineups",
+    "player_valuations",
+]
 
 # Analysis window: 2009/10 season onward
 START_DATE = date(2009, 7, 1)

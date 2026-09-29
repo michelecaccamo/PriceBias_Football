@@ -90,25 +90,53 @@ def make_tables(n_players: int = 4000, n_sales: int = 6000, seed: int = 42) -> d
         }
     )
 
+    # One synthetic game per appearance, played by the selling club
     games = []
-    for i, (pl, d, q) in enumerate(zip(pid, date, quality)):
+    for pl, d, q, club in zip(pid, date, quality, from_id):
         if d.year < 2013:
             continue
         k = rng.integers(0, 35)
-        gd = d - pd.to_timedelta(rng.integers(1, 365, k), unit="D")
-        mins = rng.integers(10, 91, k)
+        gd = d - pd.to_timedelta(rng.integers(1, 700, k), unit="D")
         games.append(pd.DataFrame({
-            "player_id": pl, "date": gd.strftime("%Y-%m-%d"),
+            "player_id": pl, "player_club_id": club, "date": gd.strftime("%Y-%m-%d"),
             "goals": rng.poisson(max(0.05, 0.2 + 0.1 * q), k),
-            "assists": rng.poisson(0.1, k), "minutes_played": mins,
+            "assists": rng.poisson(0.1, k), "minutes_played": rng.integers(10, 91, k),
+            "yellow_cards": rng.poisson(0.15, k), "red_cards": rng.poisson(0.01, k),
         }))
     appearances = pd.concat(games, ignore_index=True)
+    n = len(appearances)
+    appearances.insert(0, "game_id", np.arange(1, n + 1))
+    games_df = pd.DataFrame({
+        "game_id": appearances["game_id"],
+        "home_club_id": appearances["player_club_id"],
+        "away_club_id": 100_000,
+        "home_club_goals": rng.poisson(1.5, n),
+        "away_club_goals": rng.poisson(1.1, n),
+        "competition_type": rng.choice(["domestic_league", "international_cup"], n, p=[0.85, 0.15]),
+    })
+    lineups = pd.DataFrame({
+        "game_id": appearances["game_id"],
+        "player_id": appearances["player_id"],
+        "type": np.where(appearances["minutes_played"] > 45, "starting_lineup", "substitutes"),
+    })
+    valuations = pd.DataFrame({
+        "player_id": pid,
+        "date": (date - pd.to_timedelta(400, unit="D")).strftime("%Y-%m-%d"),
+        "market_value_in_eur": np.round(np.exp(log_mv - 0.2), -4),
+    })
+
+    players["foot"] = rng.choice(["right", "left", "both"], n_players, p=[0.7, 0.25, 0.05])
+    players["height_in_cm"] = rng.integers(168, 196, n_players)
+    players["international_caps"] = rng.poisson(8, n_players)
 
     return {
         "transfers": transfers,
         "players": players.drop(columns="quality"),
         "clubs": clubs_df,
         "appearances": appearances,
+        "games": games_df,
+        "game_lineups": lineups,
+        "player_valuations": valuations,
     }
 
 

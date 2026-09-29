@@ -7,6 +7,7 @@ import Verdict from './pages/Verdict'
 import Clubs from './pages/Clubs'
 import Expected from './pages/Expected'
 import Transfers from './pages/Transfers'
+import Compare from './pages/Compare'
 import Methodology from './pages/Methodology'
 
 const NAV = [
@@ -14,6 +15,7 @@ const NAV = [
   { to: '/clubs', label: 'Clubs' },
   { to: '/expected', label: 'Fee vs expected' },
   { to: '/transfers', label: 'Transfers' },
+  { to: '/compare', label: 'Compare' },
   { to: '/methodology', label: 'Methodology' },
 ]
 
@@ -82,6 +84,7 @@ function Shell({ data, error }: { data: Data | null; error: string | null }) {
                 <Route path="/clubs" element={<Clubs />} />
                 <Route path="/expected" element={<Expected />} />
                 <Route path="/transfers" element={<Transfers />} />
+                <Route path="/compare" element={<Compare />} />
                 <Route path="/methodology" element={<Methodology />} />
               </Routes>
             </DataContext.Provider>

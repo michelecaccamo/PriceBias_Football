@@ -100,9 +100,17 @@ def build_sales(tables: dict[str, pd.DataFrame]) -> pd.DataFrame:
     group_of = {club: spec["group"] for club, spec in CLUBS.items()}
     t["seller_group"] = t["seller_club"].map(group_of).fillna(OTHER)
 
-    players = tables["players"][
-        ["player_id", "date_of_birth", "position", "sub_position", "country_of_citizenship"]
+    player_cols = [
+        "player_id",
+        "date_of_birth",
+        "position",
+        "sub_position",
+        "country_of_citizenship",
+        "foot",
+        "height_in_cm",
+        "international_caps",
     ]
+    players = tables["players"][[c for c in player_cols if c in tables["players"].columns]]
     t = t.merge(players, on="player_id", how="left")
 
     clubs = tables["clubs"][["club_id", "domestic_competition_id"]].drop_duplicates("club_id")

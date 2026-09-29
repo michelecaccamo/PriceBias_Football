@@ -75,6 +75,37 @@ export interface Sale {
   goals: number
   assists: number
   has_perf: boolean
+  // Player profile at the moment of sale (comparison page)
+  key: string
+  player_id: number
+  foot?: string | null
+  height_in_cm?: number | null
+  international_caps?: number | null
+  country_of_citizenship?: string | null
+  stats: Record<StatWindow, WindowStats>
+  mv_peak: number | null
+  mv_year_before: number | null
+  next_move: { date: string; to: string; fee: number | null } | null
+}
+
+export type StatWindow = 'career' | 'last12'
+
+/** Totals over a window before the sale, in the competitions the dataset covers. */
+export interface WindowStats {
+  apps: number
+  starts: number
+  minutes: number
+  goals: number
+  assists: number
+  yellow: number
+  red: number
+  results: number
+  wins: number
+  draws: number
+  full_games: number
+  clean_sheets: number
+  conceded: number
+  euro_minutes: number
 }
 
 export interface Data {

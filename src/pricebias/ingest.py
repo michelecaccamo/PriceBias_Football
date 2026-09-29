@@ -10,7 +10,25 @@ from pricebias.config import DATA_BASE_URL, DATA_FILES
 
 # The data host rejects urllib's default user agent
 USER_AGENT = "pricebias/0.1 (+https://github.com/michelecaccamo/PriceBias_Football)"
-APPEARANCE_COLUMNS = ["player_id", "date", "goals", "assists", "minutes_played"]
+APPEARANCE_COLUMNS = [
+    "game_id",
+    "player_id",
+    "player_club_id",
+    "date",
+    "goals",
+    "assists",
+    "minutes_played",
+    "yellow_cards",
+    "red_cards",
+]
+GAME_COLUMNS = [
+    "game_id",
+    "home_club_id",
+    "away_club_id",
+    "home_club_goals",
+    "away_club_goals",
+    "competition_type",
+]
 
 
 def download(raw_dir: Path, force: bool = False) -> None:
@@ -40,4 +58,11 @@ def load(raw_dir: Path) -> dict[str, pd.DataFrame]:
         "players": read("players", parse_dates=["date_of_birth"]),
         "clubs": read("clubs"),
         "appearances": read("appearances", usecols=APPEARANCE_COLUMNS, parse_dates=["date"]),
+        "games": read("games", usecols=GAME_COLUMNS),
+        "game_lineups": read("game_lineups", usecols=["game_id", "player_id", "type"]),
+        "player_valuations": read(
+            "player_valuations",
+            usecols=["player_id", "date", "market_value_in_eur"],
+            parse_dates=["date"],
+        ),
     }
